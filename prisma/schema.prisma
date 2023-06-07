@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model contact_information {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  phone_number    String       @db.VarChar(50)
+  address         String       @db.VarChar(255)
+  organization_id String       @db.Uuid
+  organization    organization @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model menu_item {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String       @db.VarChar(255)
+  price           Int
+  organization_id String       @db.Uuid
+  organization    organization @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_item      order_item[]
+}
+
+model opening_hour {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  day_of_week     Int
+  start_time      DateTime     @db.Time(6)
+  end_time        DateTime     @db.Time(6)
+  organization_id String       @db.Uuid
+  organization    organization @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model order {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_id     String       @db.Uuid
+  organization_id String       @db.Uuid
+  status          String       @db.VarChar(50)
+  user            user         @relation(fields: [customer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organization    organization @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_item      order_item[]
+}
+
+model order_item {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_id     String    @db.Uuid
+  menu_item_id String    @db.Uuid
+  menu_item    menu_item @relation(fields: [menu_item_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order        order     @relation(fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model organization {
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String                @db.VarChar(255)
+  user_id             String                @db.Uuid
+  contact_information contact_information[]
+  menu_item           menu_item[]
+  opening_hour        opening_hour[]
+  order               order[]
+  user                user                  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String         @unique @db.VarChar(255)
+  firstName    String?        @db.VarChar(255)
+  lastName     String?        @db.VarChar(255)
+  roq_user_id  String         @db.VarChar(255)
+  tenant_id    String         @db.VarChar(255)
+  order        order[]
+  organization organization[]
+}
